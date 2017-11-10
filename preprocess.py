@@ -2,6 +2,10 @@ import io
 import re
 import pandas
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from collections import Counter
+
 def readCSV(in_file):
 	dataframe = pandas.read_csv(in_file)
 	return dataframe.values[:,3:6]
@@ -96,8 +100,52 @@ def lemmatize_sentence_dataset(dataset):
 				dataset[idx_row,idx_col] += lemmatizer.lemmatize(token_list[i])+" "
 	return dataset
 
-dataset = readCSV('train.csv')
-dataset = normalize_sentence_dataset(dataset[:10,:2])
-print(lemmatize_sentence_dataset(dataset))
-#print(normalize_sentence('ahok beratnya 10kg&suka tulis\email kaya gini "e-mail"'))
+def remove_stop_word(sentence):
+	for stopword in stopwords.words('english'):
+			sentence = re.sub(r" "+stopword+" ", " ", sentence)
+	return sentence
 
+def remove_shared_word(list_sentence):
+	duplicate = []
+	not_duplicate = []
+
+	for sentence in list_sentence:
+		list_of_same_word = []
+		try:
+			sentence_0 = word_tokenize(sentence[0])
+			sentence_1 = word_tokenize(sentence[1])
+			for word in sentence_0:
+				if word in sentence_1:
+					list_of_same_word.append(word)
+			if sentence[2] == 0:
+				not_duplicate.extend(list_of_same_word)
+			else:
+				duplicate.extend(list_of_same_word)
+		except:
+			pass
+	shared_word = []
+	same_word_duplicate = Counter(duplicate).most_common(500)
+	same_word_not_duplicate = Counter(not_duplicate).most_common(500)
+	for key, count in same_word_duplicate:
+		for index, value in enumerate(same_word_not_duplicate):
+			if key == value[0]:
+				shared_word.append(key)
+				del same_word_not_duplicate[index]
+				break;
+	
+	
+	for sentence in list_sentence:
+		for word in shared_word:
+			sentence[0] = re.sub(r" "+word+" ", " ", sentence[0])
+			sentence[1] = re.sub(r" "+word+" ", " ", sentence[1])
+
+	return list_sentence
+		
+	
+	
+	
+dataset = readCSV('train.csv')
+print(remove_shared_word(dataset[0:100]))
+# dataset = normalize_sentence_dataset(dataset[:10,:2])
+# print(lemmatize_sentence_dataset(dataset))
+# #print(normalize_sentence('ahok beratnya 10kg&suka tulis\email kaya gini "e-mail"'))
