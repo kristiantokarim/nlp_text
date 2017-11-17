@@ -139,6 +139,10 @@ def remove_shared_word(list_sentence):
 	
 	for sentence in list_sentence:
 		for word in shared_word:
+			if word == '(':
+				word = '\('
+			if word == ')':
+				word = '\)'
 			sentence[0] = re.sub(r" "+word+" ", " ", sentence[0])
 			sentence[1] = re.sub(r" "+word+" ", " ", sentence[1])
 
@@ -182,26 +186,34 @@ def get_features(data, model):
 	q2 = get_avg_vector(data[1], model)
 	n_w_q1 = len(data[0].strip().split(' '))
 	n_w_q2 = len(data[1].strip().split(' '))
-	return {
-		'q1': q1,
-		'q2': q2,
-		'cosine_similarity': np.dot(q1, q2)/(np.linalg.norm(q1)* np.linalg.norm(q2)),
-		'n_words_q1': n_w_q1,
-		'n_words_q2': n_w_q2,
-		'diff_words': abs(n_w_q1-n_w_q2),
-		'first_word_q1': data[0].split(' ')[0],
-		'first_word_q2': data[1].split(' ')[0],
-		'number_count_q1': get_number_count(data[0]),
-		'number_count_q2': get_number_count(data[1]),
-		'oov_count_q1': get_oov_count(data[0], model),
-		'oov_count_q2': get_oov_count(data[1], model),
-	}
+	list_features = []
+	list_features.extend(q1)
+	list_features.extend(q2)
+	list_features.append(np.dot(q1, q2)/(np.linalg.norm(q1)* np.linalg.norm(q2)))
+	list_features.append(n_w_q1)
+	list_features.append(n_w_q2)
+	list_features.extend([get_oov_count(data[1], model),get_oov_count(data[0], model),get_number_count(data[1]),abs(n_w_q1-n_w_q2)])
+	return list_features
+	# return {
+	# 	'q1': q1,
+	# 	'q2': q2,
+	# 	'cosine_similarity': np.dot(q1, q2)/(np.linalg.norm(q1)* np.linalg.norm(q2)),
+	# 	'n_words_q1': n_w_q1,
+	# 	'n_words_q2': n_w_q2,
+	# 	'diff_words': abs(n_w_q1-n_w_q2),
+	# 	'first_word_q1': data[0].split(' ')[0],
+	# 	'first_word_q2': data[1].split(' ')[0],
+	# 	'number_count_q1': get_number_count(data[0]),
+	# 	'number_count_q2': get_number_count(data[1]),
+	# 	'oov_count_q1': get_oov_count(data[0], model),
+	# 	'oov_count_q2': get_oov_count(data[1], model),
+	# }
 
-dataset = readCSV('train.csv')
-f_dataset = remove_shared_word(dataset[0:100])
-f_dataset = normalize_sentence_dataset(f_dataset)
-f_dataset = lemmatize_sentence_dataset(f_dataset)
+#dataset = readCSV('train.csv')
+#f_dataset = remove_shared_word(dataset[0:100])
+#f_dataset = normalize_sentence_dataset(f_dataset)
+#f_dataset = lemmatize_sentence_dataset(f_dataset)
 
-filename = 'GoogleNews-vectors-negative300-SLIM.bin' #https://github.com/eyaler/word2vec-slim
-model = KeyedVectors.load_word2vec_format(filename, binary=True)
-print(get_features(f_dataset[0], model))
+#filename = 'GoogleNews-vectors-negative300-SLIM.bin' #https://github.com/eyaler/word2vec-slim
+#model = KeyedVectors.load_word2vec_format(filename, binary=True)
+#print(get_features(f_dataset[0], model))
